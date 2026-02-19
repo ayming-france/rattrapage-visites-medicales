@@ -1,0 +1,2586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rattrapage des visites médicales en retard - Ayming</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-primary: #11a9e6;
+      --blue-accent: #0da4e8;
+      --blue-dark: #00456d;
+      --gradient-blue-start: #0fa7e2;
+      --gradient-green-end: #0ab38c;
+      --gradient-brand-horizontal: linear-gradient(90deg, var(--gradient-blue-start), var(--gradient-green-end));
+      --text-dark: #0f172a;
+      --text-gray: #6b7280;
+      --text-light: #9ca3af;
+      --bg-white: #ffffff;
+      --bg-light: #f8fafc;
+      --bg-subtle: #eef2f6;
+      --overlay-blue-soft: rgba(17, 169, 230, 0.1);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+      --nav-width: 260px;
+      --nav-collapsed: 20px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--bg-white);
+      color: var(--text-dark);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ===== NAVIGATION ===== */
+    .chapter-nav {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: var(--nav-width);
+      height: 100vh;
+      background: var(--bg-light);
+      border-right: 1px solid var(--bg-subtle);
+      padding: 40px 24px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(calc(-1 * var(--nav-width) + var(--nav-collapsed)));
+      transition: transform 0.3s ease;
+    }
+
+    .chapter-nav:hover,
+    .chapter-nav.open {
+      transform: translateX(0);
+    }
+
+    .nav-toggle {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      opacity: 0.3;
+      transition: opacity 0.2s;
+    }
+
+    .chapter-nav:hover .nav-toggle {
+      opacity: 0;
+    }
+
+    .nav-toggle span {
+      display: block;
+      width: 12px;
+      height: 1.5px;
+      background: var(--text-gray);
+      border-radius: 1px;
+    }
+
+    .nav-header {
+      margin-bottom: 40px;
+      padding-right: 30px;
+    }
+
+    .nav-logo {
+      height: 32px;
+      margin-bottom: 8px;
+    }
+
+    .nav-logo img {
+      height: 100%;
+      width: auto;
+    }
+
+    .nav-subtitle {
+      font-size: 11px;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .nav-subtitle:hover {
+      color: var(--blue-accent);
+    }
+
+    .nav-section {
+      margin-bottom: 28px;
+    }
+
+    .nav-section-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      padding-left: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+      color: var(--text-gray);
+    }
+
+    .nav-item:hover {
+      background: var(--overlay-blue-soft);
+      color: var(--blue-primary);
+    }
+
+    .nav-item.active {
+      background: var(--blue-primary);
+      color: white;
+    }
+
+    .nav-item-number {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .nav-item.active .nav-item-number {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+
+    /* ===== SLIDE COUNTER ===== */
+    .slide-counter {
+      position: fixed;
+      top: 30px;
+      right: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-gray);
+      z-index: 100;
+    }
+
+    .slide-counter .current {
+      color: var(--blue-accent);
+      font-weight: 600;
+    }
+
+    /* ===== PRESENTATION CONTAINER ===== */
+    .presentation {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+      transition: padding-left 0.3s ease;
+      padding-left: var(--nav-collapsed);
+    }
+
+    .chapter-nav:hover ~ .presentation,
+    .chapter-nav.open ~ .presentation {
+      padding-left: var(--nav-width);
+    }
+
+    /* ===== SLIDES ===== */
+    .slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      padding: 60px 80px;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      overflow: hidden;
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 1;
+    }
+
+    .slide-inner {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      transform: scale(1.15);
+      transform-origin: center center;
+    }
+
+    /* ===== COVER SLIDE ===== */
+    .slide.cover {
+      padding: 0;
+    }
+
+    .cover-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      height: 100%;
+    }
+
+    .cover-left {
+      background: var(--gradient-brand-horizontal);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px;
+      position: relative;
+    }
+
+    .cover-logo {
+      position: absolute;
+      top: 50px;
+      left: 80px;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cover-logo img {
+      height: 100%;
+      filter: brightness(0) invert(1);
+    }
+
+    .cover-title {
+      font-size: 52px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.15;
+    }
+
+    .cover-subtitle {
+      font-size: 20px;
+      color: rgba(255,255,255,0.85);
+      margin-top: 20px;
+      font-weight: 400;
+    }
+
+    .cover-right {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-right::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 150px;
+      height: 100%;
+      background: linear-gradient(90deg, var(--gradient-green-end) 0%, transparent 100%);
+      z-index: 1;
+    }
+
+    .cover-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ===== TYPOGRAPHY ===== */
+    .slide-title {
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 50px;
+      text-align: center;
+      background: linear-gradient(90deg, var(--gradient-blue-start), var(--gradient-green-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .title-light {
+      font-weight: 400;
+      color: var(--blue-accent);
+    }
+
+    .title-bold {
+      font-weight: 700;
+      color: var(--blue-accent);
+    }
+
+    .slide-subtitle {
+      font-size: 18px;
+      color: var(--text-gray);
+      margin-bottom: 50px;
+      font-weight: 400;
+      max-width: 900px;
+      line-height: 1.7;
+    }
+
+    /* ===== LAYOUT: SPLIT ===== */
+    .layout-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      width: 100%;
+      max-width: 1200px;
+      align-items: center;
+    }
+
+    .layout-split .content-side {
+      text-align: left;
+    }
+
+    .layout-split .content-side .slide-title {
+      text-align: left;
+      margin-bottom: 35px;
+    }
+
+    .layout-split .visual-side {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== LAYOUT: 3 COLUMNS ===== */
+    .three-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .column-card {
+      text-align: center;
+    }
+
+    .column-card .card-image {
+      width: 100%;
+      height: 200px;
+      background: var(--bg-subtle);
+      border-radius: 16px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .column-card .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .column-card h3 {
+      font-size: 18px;
+      color: var(--blue-accent);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .column-card p {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.6;
+    }
+
+    .column-card p strong {
+      color: var(--text-dark);
+    }
+
+    /* ===== PARAGRAPH STYLES ===== */
+    .content-paragraph {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--text-gray);
+      margin-bottom: 22px;
+      text-align: left;
+    }
+
+    .content-paragraph strong {
+      color: var(--text-dark);
+      font-weight: 600;
+    }
+
+    .content-paragraph.highlight {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--blue-dark);
+    }
+
+    /* ===== IMAGE CONTAINER ===== */
+    .image-container {
+      width: 100%;
+      max-width: 480px;
+      height: 360px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+
+    .image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-container .image-placeholder {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg-light) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .image-placeholder-icon {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 12px;
+      color: var(--text-light);
+    }
+
+    .image-placeholder-text {
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    .floating-badge {
+      position: absolute;
+      background: white;
+      border-radius: 12px;
+      padding: 12px 18px;
+      box-shadow: var(--shadow-md);
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .floating-badge.top-right {
+      top: 20px;
+      right: -15px;
+    }
+
+    .floating-badge.bottom-left {
+      bottom: 25px;
+      left: -15px;
+    }
+
+    .floating-badge .badge-number {
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    .floating-badge svg {
+      width: 18px;
+      height: 18px;
+      color: var(--blue-accent);
+    }
+
+    /* ===== STATS CARDS ===== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 35px;
+      width: 100%;
+      max-width: 950px;
+    }
+
+    .stat-card {
+      background: var(--bg-white);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+      border: 1px solid var(--bg-subtle);
+    }
+
+    .stat-number {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--blue-accent);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-gray);
+      font-weight: 500;
+    }
+
+    /* ===== VARIANT: 4 STATS ===== */
+    .stats-row-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 25px;
+      width: 100%;
+      max-width: 1050px;
+    }
+
+    .stats-row-4 .stat-card {
+      padding: 30px 20px;
+    }
+
+    .stats-row-4 .stat-number {
+      font-size: 36px;
+    }
+
+    .stats-row-4 .stat-label {
+      font-size: 13px;
+    }
+
+    /* ===== TABLE STYLES ===== */
+    .table-container {
+      width: 100%;
+      max-width: 1050px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .comparison-table th {
+      background: var(--blue-primary);
+      color: white;
+      padding: 20px 30px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .comparison-table th:first-child {
+      text-align: center;
+    }
+
+    .comparison-table th:nth-child(2),
+    .comparison-table th:nth-child(3) {
+      text-align: left;
+    }
+
+    .comparison-table td {
+      padding: 24px 30px;
+      border-bottom: 1px solid var(--bg-subtle);
+      font-size: 14px;
+      background: var(--bg-white);
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comparison-table td:first-child {
+      font-weight: 600;
+      color: var(--text-dark);
+      text-align: center;
+      vertical-align: middle;
+      background: var(--bg-light);
+    }
+
+    .comparison-table td:nth-child(2),
+    .comparison-table td:nth-child(3) {
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .comparison-table ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .comparison-table li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+      color: var(--text-gray);
+    }
+
+    .comparison-table li:last-child {
+      margin-bottom: 0;
+    }
+
+    .comparison-table li::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--blue-accent);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    /* ===== FEATURE GRID (4 items, 2x2) ===== */
+    .feature-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 50px 80px;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      text-align: left;
+    }
+
+    .feature-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--blue-primary);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .feature-icon svg {
+      width: 30px;
+      height: 30px;
+    }
+
+    .feature-content h4 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 10px;
+    }
+
+    .feature-content p {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.6;
+    }
+
+    /* ===== VALUE DETAIL SLIDE ===== */
+    .value-detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      width: 100%;
+      max-width: 1150px;
+      align-items: center;
+      transform: scale(1.15);
+      transform-origin: center center;
+    }
+
+    .value-detail-content {
+      text-align: left;
+    }
+
+    .value-detail-content h2 {
+      font-size: 38px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--gradient-blue-start), var(--gradient-green-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 30px;
+      line-height: 1.2;
+    }
+
+    .value-detail-list {
+      list-style: none;
+    }
+
+    .value-detail-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      font-size: 17px;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .value-detail-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .value-detail-list .check-icon {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+      color: var(--blue-accent);
+      margin-top: 2px;
+    }
+
+    .value-detail-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .value-image-container {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--bg-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      box-shadow:
+        0 0 60px 20px rgba(17, 169, 230, 0.25),
+        0 0 100px 40px rgba(10, 179, 140, 0.15),
+        0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .value-image-container img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ===== PROCESS TIMELINE ===== */
+    .process-timeline {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .process-step {
+      text-align: center;
+      flex: 1;
+      max-width: 260px;
+    }
+
+    .step-number {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--gradient-brand-horizontal);
+      color: white;
+      font-size: 32px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .step-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 10px;
+    }
+
+    .step-duration {
+      font-size: 14px;
+      color: var(--blue-accent);
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .step-description {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.6;
+    }
+
+    .step-arrow {
+      font-size: 24px;
+      color: var(--text-light);
+      margin-top: 30px;
+      flex-shrink: 0;
+    }
+
+    /* ===== VARIANT: 4 STEPS TIMELINE ===== */
+    .process-timeline-4 {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 25px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .process-timeline-4 .process-step {
+      text-align: center;
+      flex: 1;
+      max-width: 220px;
+    }
+
+    .process-timeline-4 .step-number {
+      width: 70px;
+      height: 70px;
+      font-size: 28px;
+      margin: 0 auto 20px;
+    }
+
+    .process-timeline-4 .step-title {
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    .process-timeline-4 .step-duration {
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .process-timeline-4 .step-description {
+      font-size: 13px;
+    }
+
+    .process-timeline-4 .step-arrow {
+      font-size: 20px;
+      margin-top: 25px;
+    }
+
+    /* ===== REQUIREMENTS LIST ===== */
+    .requirements-box {
+      background: var(--bg-light);
+      border-radius: 20px;
+      padding: 45px 55px;
+      border-left: 5px solid var(--blue-accent);
+      text-align: left;
+      width: 100%;
+      max-width: 750px;
+    }
+
+    .requirements-box h4 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 30px;
+    }
+
+    .requirements-box ul {
+      list-style: none;
+    }
+
+    .requirements-box li {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 16px 0;
+      font-size: 17px;
+      color: var(--text-gray);
+      border-bottom: 1px solid var(--bg-subtle);
+    }
+
+    .requirements-box li:last-child {
+      border-bottom: none;
+    }
+
+    .requirements-box li .check-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--gradient-brand-horizontal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .requirements-box li .check-icon svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+    }
+
+    /* ===== LOGO ===== */
+    .company-logo {
+      position: absolute;
+      bottom: 35px;
+      right: 50px;
+      height: 30px;
+    }
+
+    .company-logo img {
+      height: 100%;
+      width: auto;
+    }
+
+    /* ===== IMPLANTATION MAP ===== */
+    .implantation-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      width: 100%;
+      max-width: 1050px;
+      margin: -20px auto 0;
+      padding: 0;
+    }
+
+    /* Tighter title spacing on international map slide */
+    .slide-inner:has(.implantation-container) .slide-title {
+      margin-bottom: 10px;
+    }
+
+    .implantation-na {
+      height: 560px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .implantation-eu {
+      height: 560px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .implantation-france {
+      height: 540px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    /* ===== FAQ CARDS ===== */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 36px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .faq-card {
+      background: var(--bg-white);
+      border-radius: 18px;
+      padding: 38px 44px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--bg-subtle);
+      text-align: left;
+    }
+
+    .faq-card h4 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--blue-accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .faq-card h4 svg {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .faq-card p {
+      font-size: 15px;
+      color: var(--text-gray);
+      line-height: 1.7;
+    }
+
+    /* ===== IDEAL WORLD CARDS ===== */
+    .ideal-card .card-image {
+      background: linear-gradient(135deg, #e0f4f8 0%, #e3f9ed 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ideal-card .card-image svg {
+      width: 65px;
+      height: 65px;
+      color: var(--blue-accent);
+    }
+
+    /* ===== INTRODUCTION SLIDE - HERO LAYOUT ===== */
+    .slide-introduction {
+      padding: 0;
+    }
+
+    .slide-introduction .slide-inner {
+      transform: scale(1.0);
+      justify-content: flex-start;
+      padding-top: 0;
+      max-width: none;
+      width: 100%;
+    }
+
+    .intro-hero {
+      width: 100vw;
+      max-width: none;
+      height: 70vh;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .intro-hero-collage {
+      display: flex;
+      width: max-content;
+      height: 100%;
+      animation: scrollCarousel 45s linear infinite;
+    }
+
+    .intro-hero-collage img {
+      width: auto;
+      height: 100%;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    @keyframes scrollCarousel {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .intro-hero::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 61, 121, 0.25) 0%,
+        rgba(0, 0, 0, 0.05) 30%,
+        rgba(0, 0, 0, 0.05) 60%,
+        rgba(0, 0, 0, 0.2) 100%
+      );
+      pointer-events: none;
+    }
+
+    .intro-hero-logo {
+      position: absolute;
+      top: 30px; left: 40px; z-index: 3;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .intro-hero-logo img {
+      height: 44px;
+      width: auto;
+      display: block;
+    }
+
+    .intro-title-band {
+      position: absolute;
+      bottom: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 20px 60px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    .intro-offer-title {
+      font-size: 42px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -0.5px;
+      margin: 0;
+      background: linear-gradient(90deg, var(--gradient-blue-start), var(--gradient-green-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .intro-stats {
+      position: absolute;
+      bottom: 0; left: 0; right: 0; z-index: 2;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      padding: 28px 60px;
+    }
+
+    .intro-stat-card {
+      background: transparent;
+      padding: 16px 70px;
+      text-align: center;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .intro-stat-card:last-child {
+      border-right: none;
+    }
+
+    .intro-stat-number {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--blue-accent);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .intro-stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .intro-content {
+      text-align: center;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .intro-pitch {
+      font-size: 18px;
+      color: var(--text-dark);
+      line-height: 1.7;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    @keyframes fadeInUpCentered {
+      from { opacity: 0; transform: translateX(-50%) translateY(25px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .slide-introduction.active .intro-hero-logo {
+      animation: fadeInUp 0.5s ease 0.1s forwards;
+      opacity: 0;
+    }
+    .slide-introduction.active .intro-title-band {
+      animation: fadeInUpCentered 0.6s ease 0.3s forwards;
+      opacity: 0;
+    }
+    .slide-introduction.active .intro-stat-card {
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+    .slide-introduction.active .intro-stat-card:nth-child(1) { animation-delay: 0.5s; }
+    .slide-introduction.active .intro-stat-card:nth-child(2) { animation-delay: 0.65s; }
+    .slide-introduction.active .intro-stat-card:nth-child(3) { animation-delay: 0.8s; }
+    .slide-introduction.active .intro-pitch {
+      animation: fadeInUp 0.5s ease 1s forwards;
+      opacity: 0;
+    }
+
+    /* ===== CTA BOX ===== */
+    .cta-box {
+      background: linear-gradient(90deg, #0fa7e2, #0ab38c);
+      border-radius: 12px;
+      padding: 24px 40px;
+      margin-top: 20px;
+    }
+
+    .cta-text {
+      font-size: 20px;
+      font-weight: 600;
+      color: white;
+      text-align: center;
+    }
+
+    /* ===== FEATURE GRID (5 items, 3+2 centered) ===== */
+    .feature-grid-5 {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 55px 25px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .feature-grid-5 .feature-item:nth-child(1) { grid-column: 1 / 3; }
+    .feature-grid-5 .feature-item:nth-child(2) { grid-column: 3 / 5; }
+    .feature-grid-5 .feature-item:nth-child(3) { grid-column: 5 / 7; }
+    .feature-grid-5 .feature-item:nth-child(4) { grid-column: 2 / 4; }
+    .feature-grid-5 .feature-item:nth-child(5) { grid-column: 4 / 6; }
+
+    .feature-grid-5 .feature-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+    }
+
+    .feature-grid-5 .feature-icon svg {
+      width: 24px; height: 24px;
+    }
+
+    .feature-grid-5 .feature-content h4 {
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .feature-grid-5 .feature-content p {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(25px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide.active .slide-title,
+    .slide.active .cover-title,
+    .slide.active .value-detail-content h2 {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .slide.active .slide-subtitle,
+    .slide.active .cover-subtitle {
+      animation: fadeInUp 0.5s ease 0.1s forwards;
+      opacity: 0;
+      animation-fill-mode: forwards;
+    }
+
+    .slide.active .content-paragraph {
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .slide.active .content-paragraph:nth-child(2) { animation-delay: 0.1s; }
+    .slide.active .content-paragraph:nth-child(3) { animation-delay: 0.15s; }
+    .slide.active .content-paragraph:nth-child(4) { animation-delay: 0.2s; }
+
+    .slide.active .column-card,
+    .slide.active .stat-card,
+    .slide.active .faq-card,
+    .slide.active .feature-item,
+    .slide.active .process-step {
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .slide.active .column-card:nth-child(1),
+    .slide.active .stat-card:nth-child(1),
+    .slide.active .feature-item:nth-child(1) { animation-delay: 0.15s; }
+    .slide.active .column-card:nth-child(2),
+    .slide.active .stat-card:nth-child(2),
+    .slide.active .feature-item:nth-child(2) { animation-delay: 0.25s; }
+    .slide.active .column-card:nth-child(3),
+    .slide.active .stat-card:nth-child(3),
+    .slide.active .feature-item:nth-child(3) { animation-delay: 0.35s; }
+    .slide.active .feature-item:nth-child(4) { animation-delay: 0.45s; }
+    .slide.active .feature-item:nth-child(5) { animation-delay: 0.55s; }
+
+    .slide.active .process-step:nth-of-type(1) { animation-delay: 0.15s; }
+    .slide.active .process-step:nth-of-type(2) { animation-delay: 0.30s; }
+    .slide.active .process-step:nth-of-type(3) { animation-delay: 0.45s; }
+    .slide.active .process-step:nth-of-type(4) { animation-delay: 0.60s; }
+
+    .slide.active .faq-card:nth-child(1) { animation-delay: 0.1s; }
+    .slide.active .faq-card:nth-child(2) { animation-delay: 0.2s; }
+    .slide.active .faq-card:nth-child(3) { animation-delay: 0.3s; }
+    .slide.active .faq-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .slide.active .value-detail-list li {
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .slide.active .value-detail-list li:nth-child(1) { animation-delay: 0.15s; }
+    .slide.active .value-detail-list li:nth-child(2) { animation-delay: 0.25s; }
+    .slide.active .value-detail-list li:nth-child(3) { animation-delay: 0.35s; }
+    .slide.active .value-detail-list li:nth-child(4) { animation-delay: 0.45s; }
+
+    .slide.active .requirements-box li {
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+    .slide.active .requirements-box li:nth-child(1) { animation-delay: 0.15s; }
+    .slide.active .requirements-box li:nth-child(2) { animation-delay: 0.25s; }
+    .slide.active .requirements-box li:nth-child(3) { animation-delay: 0.35s; }
+
+    /* ===== KEYBOARD HINT ===== */
+    .keyboard-hint {
+      position: fixed;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      background: var(--bg-subtle);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+      margin: 0 2px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .key:hover {
+      background: var(--blue-primary);
+      color: white;
+    }
+
+    .key:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== TESTIMONIAL FLIP CARDS ===== */
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      width: 100%;
+      max-width: 1100px;
+      perspective: 1000px;
+    }
+
+    .testimonial-grid.count-3 { grid-template-columns: repeat(3, 1fr); }
+    .testimonial-grid.count-2 { grid-template-columns: repeat(2, 1fr); max-width: 750px; margin: 0 auto; }
+    .testimonial-grid.count-1 { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+
+    .testimonial-card {
+      position: relative;
+      height: 420px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .testimonial-card:hover {
+      transform: translateY(-8px);
+    }
+
+    .testimonial-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s ease;
+      transform-style: preserve-3d;
+    }
+
+    .testimonial-card:hover .testimonial-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .testimonial-front,
+    .testimonial-back {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .testimonial-front {
+      background: var(--bg-white);
+    }
+
+    .testimonial-front > img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .testimonial-card:hover .testimonial-front > img {
+      transform: scale(1.05);
+    }
+
+    .testimonial-front::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.3) 0%,
+        rgba(0, 0, 0, 0.05) 35%,
+        rgba(0, 0, 0, 0.05) 55%,
+        rgba(0, 61, 121, 0.4) 85%,
+        rgba(0, 61, 121, 0.6) 100%
+      );
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .testimonial-logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5);
+      z-index: 2;
+      transition: transform 0.3s ease;
+    }
+
+    .testimonial-card:hover .testimonial-logo {
+      transform: scale(1.05);
+    }
+
+    .testimonial-logo img {
+      height: 30px;
+      width: auto;
+      max-width: 110px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .testimonial-title {
+      position: absolute;
+      bottom: 80px;
+      left: 24px;
+      right: 24px;
+      font-size: 19px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.35;
+      margin: 0;
+      z-index: 2;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .testimonial-hint {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 2;
+      background: linear-gradient(135deg, var(--blue-primary), var(--gradient-green-end));
+      padding: 10px 18px;
+      border-radius: 24px;
+      box-shadow: 0 4px 16px rgba(0, 61, 121, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .testimonial-card:hover .testimonial-hint {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .testimonial-hint svg {
+      width: 16px;
+      height: 16px;
+      animation: spin-hint 2s ease-in-out infinite;
+    }
+
+    @keyframes spin-hint {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+    }
+
+    .testimonial-back {
+      background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 28px 24px;
+      text-align: left;
+    }
+
+    .testimonial-stars {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .testimonial-stars-icons {
+      color: #fbbf24;
+      font-size: 18px;
+      letter-spacing: 3px;
+    }
+
+    .testimonial-date {
+      color: var(--text-gray);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .testimonial-quote-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .testimonial-quote::before {
+      content: '\201C';
+      font-size: 28px;
+      font-family: Georgia, serif;
+      color: var(--blue-primary);
+      opacity: 0.5;
+      line-height: 1;
+      margin-right: 4px;
+    }
+
+    .testimonial-quote::after {
+      content: '\201D';
+      font-size: 28px;
+      font-family: Georgia, serif;
+      color: var(--blue-primary);
+      opacity: 0.5;
+      line-height: 1;
+      margin-left: 4px;
+    }
+
+    .testimonial-quote {
+      color: var(--text-dark);
+      font-size: 15px;
+      font-style: italic;
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+
+    .testimonial-cta {
+      color: var(--blue-primary);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .testimonial-cta::after {
+      content: '\2192';
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+
+    .testimonial-cta:hover {
+      color: var(--gradient-green-end);
+    }
+
+    .testimonial-cta:hover::after {
+      transform: translateX(4px);
+    }
+
+    .testimonial-author {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .testimonial-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .testimonial-position {
+      font-size: 12px;
+      color: var(--text-gray);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .testimonial-company-logo {
+      height: 22px;
+      width: auto;
+      max-width: 70px;
+      object-fit: contain;
+      opacity: 0.7;
+      display: block;
+    }
+
+    /* ===== IMPLANTATION (ANCRAGE + INTERNATIONAL) ===== */
+    .ancrage-layout {
+      display: flex;
+      align-items: center;
+      gap: 60px;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .ancrage-text {
+      flex: 0 0 42%;
+    }
+
+    .ancrage-text p {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--text-gray);
+      text-align: left;
+    }
+
+    .ancrage-text p strong {
+      color: var(--text-dark);
+    }
+
+    .ancrage-map {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+
+    .ancrage-map img {
+      height: 540px;
+      width: auto;
+      object-fit: contain;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Chapter Navigation -->
+  <nav class="chapter-nav">
+    <div class="nav-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="nav-header">
+      <div class="nav-logo">
+        <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming">
+      </div>
+      <a href="https://www.ayming.fr/ressources-humaines/prevention-et-sante-au-travail/rattraper-les-visites-medicales-en-retard/?utm_source=slides-sales&utm_medium=print&utm_campaign=rattrapage-visites-medicales" class="nav-subtitle" target="_blank">Rattrapage des visites médicales</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Le Marché</div>
+      <div class="nav-item active" data-slide="0">
+        <span class="nav-item-number">01</span>
+        Couverture
+      </div>
+      <div class="nav-item" data-slide="1">
+        <span class="nav-item-number">02</span>
+        Insight
+      </div>
+      <div class="nav-item" data-slide="2">
+        <span class="nav-item-number">03</span>
+        Alternatives
+      </div>
+      <div class="nav-item" data-slide="3">
+        <span class="nav-item-number">04</span>
+        Comparaison
+      </div>
+      <div class="nav-item" data-slide="4">
+        <span class="nav-item-number">05</span>
+        Monde Idéal
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Notre Solution</div>
+      <div class="nav-item" data-slide="5">
+        <span class="nav-item-number">06</span>
+        Introduction
+      </div>
+      <div class="nav-item" data-slide="6">
+        <span class="nav-item-number">07</span>
+        Valeur
+      </div>
+      <div class="nav-item" data-slide="11">
+        <span class="nav-item-number">08</span>
+        Preuves
+      </div>
+      <div class="nav-item" data-slide="12">
+        <span class="nav-item-number">09</span>
+        Implantation
+      </div>
+      <div class="nav-item" data-slide="14">
+        <span class="nav-item-number">10</span>
+        Questions
+      </div>
+      <div class="nav-item" data-slide="15">
+        <span class="nav-item-number">11</span>
+        Processus
+      </div>
+      <div class="nav-item" data-slide="16">
+        <span class="nav-item-number">12</span>
+        Démarrage
+      </div>
+    </div>
+  </nav>
+
+  <!-- Slide Counter -->
+  <div class="slide-counter"><span class="current">1</span>/17</div>
+
+  <!-- Presentation -->
+  <main class="presentation">
+
+    <!-- Slide 1: COVER -->
+    <section class="slide cover active" data-chapter="cover">
+      <div class="cover-layout">
+        <div class="cover-left">
+          <div class="cover-logo">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming">
+          </div>
+          <h1 class="cover-title">Rattrapage des visites médicales en retard</h1>
+          <p class="cover-subtitle">Projets de rattrapage structurés qui diagnostiquent, coordonnent avec les SPST, et produisent les preuves de conformité</p>
+        </div>
+        <div class="cover-right">
+          <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-2.jpg" alt="Rattrapage visites médicales" class="cover-image">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: INSIGHT -->
+    <section class="slide" data-chapter="insight">
+      <div class="layout-split">
+        <div class="content-side">
+          <h2 class="slide-title">Le retard de visites médicales, un problème systémique</h2>
+          <p class="content-paragraph">La plupart des entreprises traitent les retards de visites médicales comme un problème de gestion RH. Mais c'est en réalité une <strong>conséquence de deux forces systémiques</strong> hors de leur contrôle : la pénurie structurelle de médecins du travail et la complexification réglementaire post-Loi Santé au Travail 2021.</p>
+          <p class="content-paragraph">Quand vous ne pouvez pas obtenir de créneaux SPST malgré vos efforts, les retards s'accumulent discrètement. Sans suivi structuré, vous perdez la visibilité sur les collaborateurs non vus. Les preuves deviennent partielles. Et un jour, l'inspection du travail arrive ou un accident survient, et vous réalisez <strong>l'ampleur du retard accumulé</strong>.</p>
+          <p class="content-paragraph highlight">Chez Ayming, nous croyons que les retards de visites médicales ne doivent pas être gérés comme un problème administratif continu, mais comme un projet de rattrapage structuré avec diagnostic, planification et exécution.</p>
+        </div>
+        <div class="visual-side">
+          <div class="image-container">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec.jpg" alt="Retard visites médicales">
+            <div class="floating-badge top-right">
+              <span class="badge-number">€1 500</span>
+              <span>amende / infraction</span>
+            </div>
+            <div class="floating-badge bottom-left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <span>Faute inexcusable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 3: ALTERNATIVES - 3 Column Cards -->
+    <section class="slide" data-chapter="alternatives">
+      <div class="slide-inner">
+        <h2 class="slide-title">Comment les entreprises gèrent<br>les retards aujourd'hui</h2>
+        <div class="three-columns">
+          <div class="column-card">
+            <div class="card-image">
+              <img src="https://images.unsplash.com/photo-1551836022-4c4c79ecde51?w=400&h=300&fit=crop" alt="Excel spreadsheet">
+            </div>
+            <h3>Gestion manuelle Excel</h3>
+            <p><strong>Suit, n'agit pas.</strong> Excel suit les échéances, mais ne résout pas l'accès aux créneaux SPST. Coordinateur débordé, pas de visibilité pour la direction.</p>
+          </div>
+          <div class="column-card">
+            <div class="card-image">
+              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop" alt="SIRH software">
+            </div>
+            <h3>Module SIRH</h3>
+            <p><strong>Bon pour prévenir, pas rattraper.</strong> Alertes automatiques, bon pour le suivi continu. Mais pas spécialisé pour les projets de rattrapage.</p>
+          </div>
+          <div class="column-card">
+            <div class="card-image">
+              <img src="https://images.unsplash.com/photo-1573497491208-6b1acb260507?w=400&h=300&fit=crop" alt="Recrutement temporaire">
+            </div>
+            <h3>Recrutement temporaire</h3>
+            <p><strong>Part de zéro.</strong> CDD ou intérimaire dédié pour 3-6 mois. Aucune relation SPST, courbe d'apprentissage longue, connaissance perdue au départ.</p>
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 4: ALTERNATIVES - Comparison Table -->
+    <section class="slide" data-chapter="alternatives">
+      <div class="slide-inner">
+        <h2 class="slide-title">Comparaison des alternatives</h2>
+        <div class="table-container">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Approche</th>
+                <th>Points forts</th>
+                <th>Limitations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Gestion manuelle Excel</td>
+                <td>
+                  <ul>
+                    <li>Contrôle interne total</li>
+                    <li>Pas de coût externe</li>
+                    <li>Suivi structuré</li>
+                  </ul>
+                </td>
+                <td>
+                  <ul>
+                    <li>Ne résout pas l'accès aux créneaux SPST</li>
+                    <li>Coordinateur débordé</li>
+                    <li>Pas d'effet de levier</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>Module SIRH</td>
+                <td>
+                  <ul>
+                    <li>Alertes automatiques</li>
+                    <li>Intégré aux données RH</li>
+                    <li>Bon pour le suivi continu</li>
+                  </ul>
+                </td>
+                <td>
+                  <ul>
+                    <li>Pas spécialisé pour les projets de rattrapage</li>
+                    <li>Pas de coordination SPST active</li>
+                    <li>Pas d'effet de levier pour obtenir créneaux</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>Recrutement temporaire</td>
+                <td>
+                  <ul>
+                    <li>Ressource 100% dédiée</li>
+                    <li>Contrôle interne du projet</li>
+                    <li>Coût prévisible</li>
+                  </ul>
+                </td>
+                <td>
+                  <ul>
+                    <li>Aucune relation SPST, aucun effet de levier</li>
+                    <li>Courbe d'apprentissage longue</li>
+                    <li>Connaissance perdue au départ</li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 5: MONDE IDÉAL -->
+    <section class="slide" data-chapter="monde-ideal">
+      <div class="slide-inner">
+        <h2 class="slide-title">Solution idéale<br>pour le rattrapage</h2>
+        <div class="three-columns">
+          <div class="column-card ideal-card">
+            <div class="card-image">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <h3>Diagnostic avant action</h3>
+            <p>Analyse de l'état du retard, identification des collaborateurs concernés, priorisation des urgences (visites de reprise, VIP dépassées, périodiques en retard)</p>
+          </div>
+          <div class="column-card ideal-card">
+            <div class="card-image">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <h3>Planification et accès SPST</h3>
+            <p>Coordination avec les SPST pour obtenir les créneaux malgré la pénurie, organisation des visites par vagues de priorité</p>
+          </div>
+          <div class="column-card ideal-card">
+            <div class="card-image">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <h3>Documentation de conformité</h3>
+            <p>Centralisation des convocations, réalisations et avis d'aptitude pour démontrer la conformité lors d'inspections</p>
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 6: INTRODUCTION -->
+    <section class="slide slide-introduction" data-chapter="introduction">
+      <div class="slide-inner">
+        <div class="intro-hero">
+          <div class="intro-hero-logo">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming">
+          </div>
+          <div class="intro-hero-collage">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-2.jpg" alt="Diagnostic">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-3.jpg" alt="Planification SPST">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-4.jpg" alt="Documentation">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-2.jpg" alt="Diagnostic">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-3.jpg" alt="Planification SPST">
+            <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-4.jpg" alt="Documentation">
+          </div>
+          <div class="intro-title-band">
+            <h1 class="intro-offer-title">Rattrapage des visites médicales en retard</h1>
+          </div>
+          <div class="intro-stats">
+            <div class="intro-stat-card">
+              <div class="intro-stat-number">96 000+</div>
+              <div class="intro-stat-label">Salariés sous gestion</div>
+            </div>
+            <div class="intro-stat-card">
+              <div class="intro-stat-number">225 000+</div>
+              <div class="intro-stat-label">Interactions SPST annuelles</div>
+            </div>
+            <div class="intro-stat-card">
+              <div class="intro-stat-number">54 000+</div>
+              <div class="intro-stat-label">Convocations / an</div>
+            </div>
+          </div>
+        </div>
+        <div class="intro-content">
+          <p class="intro-pitch">Nous exécutons des projets de rattrapage structurés de visites médicales en retard qui diagnostiquent l'ampleur du retard, coordonnent avec vos SPST, et produisent les preuves de conformité pour les inspections.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: VALEUR OVERVIEW -->
+    <section class="slide" data-chapter="valeur">
+      <div class="slide-inner">
+        <h2 class="slide-title">Ce qu'Ayming vous apporte<br>de différent</h2>
+        <div class="feature-grid-5">
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h4>Diagnostic de l'état du retard</h4>
+              <p>Vous savez exactement où vous en êtes, qui est en retard, et quelle est la priorité d'action</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h4>Planification intensive SPST</h4>
+              <p>Les visites sont planifiées et réalisées, le retard se résorbe progressivement</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h4>Documentation centralisée</h4>
+              <p>Vous pouvez démontrer la conformité aux inspecteurs, vous avez les preuves, vous dormez tranquille</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 8: VALUE DETAIL 1 - Phase 1 Diagnostic -->
+    <section class="slide" data-chapter="valeur-1">
+      <div class="value-detail-layout">
+        <div class="value-detail-content">
+          <h2>Diagnostic de l'état du retard</h2>
+            <ul class="value-detail-list">
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Analyse de vos données RH pour cartographier le retard par site</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Identification de chaque collaborateur non vu par type de visite</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Priorisation par urgence juridique (reprises, VIP, périodiques)</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Rapport de diagnostic clair pour valider le périmètre avec la direction</span>
+              </li>
+            </ul>
+          </div>
+          <div class="value-detail-visual">
+            <div class="value-image-container">
+              <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-2.jpg" alt="Diagnostic de l'état du retard">
+            </div>
+          </div>
+        </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 9: VALUE DETAIL 2 - Phase 2 Planification -->
+    <section class="slide" data-chapter="valeur-2">
+      <div class="value-detail-layout">
+        <div class="value-detail-content">
+          <h2>Planification intensive SPST</h2>
+            <ul class="value-detail-list">
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Négociation de créneaux SPST grâce à 225 000+ interactions annuelles</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Coordination multi-sites en parallèle, un seul interlocuteur Ayming</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Convocations personnalisées aux salariés avec relances automatiques</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Gestion des absences et reprogrammations avec traçabilité complète</span>
+              </li>
+            </ul>
+          </div>
+          <div class="value-detail-visual">
+            <div class="value-image-container">
+              <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-3.jpg" alt="Planification intensive SPST">
+            </div>
+          </div>
+        </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 10: VALUE DETAIL 3 - Phase 3 Documentation -->
+    <section class="slide" data-chapter="valeur-3">
+      <div class="value-detail-layout">
+        <div class="value-detail-content">
+          <h2>Documentation centralisée</h2>
+            <ul class="value-detail-list">
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Suivi centralisé via Ayming Checkup par salarié, par site, par visite</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Reporting en temps réel du taux de réalisation et du reste à faire</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Dossier de conformité prêt pour inspection du travail</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Archivage sécurisé conforme RGPD et HDS</span>
+              </li>
+            </ul>
+          </div>
+          <div class="value-detail-visual">
+            <div class="value-image-container">
+              <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-rec-4.jpg" alt="Documentation centralisée">
+            </div>
+          </div>
+        </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 11: OPTIONS - Single add-on from sales-pitch.md -->
+    <section class="slide" data-chapter="options" style="background: var(--bg-light);">
+      <div class="slide-inner">
+        <h1 class="slide-title">Option pour aller plus loin</h1>
+        <div style="display: flex; justify-content: center; width: 100%; max-width: 1100px;">
+          <div class="column-card" style="max-width: 380px;">
+            <div class="card-image">
+              <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-4.jpg" alt="Externalisation complète">
+            </div>
+            <h3>Externalisation compl&egrave;te des visites m&eacute;dicales</h3>
+            <p>Pour &eacute;viter de recr&eacute;er du retard apr&egrave;s le projet de rattrapage, Ayming peut prendre en charge l'ensemble de votre processus de gestion des visites m&eacute;dicales par l'externalisation compl&egrave;te. Gestion continue des convocations, coordination SPST, suivi r&eacute;glementaire, et reporting centralis&eacute;.</p>
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 12: PREUVES - Testimonial Flip Cards -->
+    <section class="slide" data-chapter="preuves">
+      <div class="slide-inner">
+        <h1 class="slide-title">Ils nous font confiance</h1>
+
+        <div class="testimonial-grid count-2">
+
+          <!-- Card 1: KparK -->
+          <div class="testimonial-card">
+            <div class="testimonial-card-inner">
+              <div class="testimonial-front">
+                <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/08/KparK-532x470.jpg" alt="KparK">
+                <p class="testimonial-title">La s&eacute;curisation du suivi des visites m&eacute;dicales chez KparK</p>
+                <div class="testimonial-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/08/Sans-titre-3-176x88.jpg" alt="KparK"></div>
+                <span class="testimonial-hint">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Découvrir
+                </span>
+              </div>
+              <div class="testimonial-back">
+                <div class="testimonial-stars"><span class="testimonial-stars-icons">★★★★★</span><span class="testimonial-date">2023</span></div>
+                <div class="testimonial-quote-section">
+                  <p class="testimonial-quote">AYMING se rapprochait plus de nos attentes tant sur la proposition commerciale mais surtout sur l'accompagnement avec nos sp&eacute;cificit&eacute;s.</p>
+                  <a href="https://www.ayming.fr/temoignages-clients/la-securisation-du-suivi-des-visites-medicales-chez-kpark/?utm_source=slides-sales&amp;utm_medium=print&amp;utm_campaign=rattrapage-visites-medicales&amp;utm_content=testimonial" target="_blank" class="testimonial-cta">Lire la suite</a>
+                </div>
+                <div class="testimonial-author">
+                  <span class="testimonial-name">Perrine Domecq</span>
+                  <span class="testimonial-position">Charg&eacute;e administration du personnel, KparK</span>
+                  <img class="testimonial-company-logo" src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/08/Sans-titre-3-176x88.jpg" alt="KparK">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: EURALIS -->
+          <div class="testimonial-card">
+            <div class="testimonial-card-inner">
+              <div class="testimonial-front">
+                <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2024/08/Euralis-1436-x-808-1.jpg" alt="EURALIS">
+                <p class="testimonial-title">L'externalisation du suivi des visites m&eacute;dicales chez EURALIS</p>
+                <div class="testimonial-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/08/hppGHpbk_400x400-e1759306442143-176x55.jpeg" alt="EURALIS"></div>
+                <span class="testimonial-hint">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Découvrir
+                </span>
+              </div>
+              <div class="testimonial-back">
+                <div class="testimonial-stars"><span class="testimonial-stars-icons">★★★★★</span><span class="testimonial-date">2024</span></div>
+                <div class="testimonial-quote-section">
+                  <p class="testimonial-quote">Je recommande Ayming pour la qualit&eacute; de ses prestations, le professionnalisme et la disponibilit&eacute; des &eacute;quipes ainsi que pour le suivi commercial du dossier.</p>
+                  <a href="https://www.ayming.fr/temoignages-clients/lexternalisation-du-suivi-des-visites-medicales-chez-euralis/?utm_source=slides-sales&amp;utm_medium=print&amp;utm_campaign=rattrapage-visites-medicales&amp;utm_content=testimonial" target="_blank" class="testimonial-cta">Lire la suite</a>
+                </div>
+                <div class="testimonial-author">
+                  <span class="testimonial-name">Xavier Berhonde</span>
+                  <span class="testimonial-position">Directeur QSE, EURALIS Solutions</span>
+                  <img class="testimonial-company-logo" src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/08/hppGHpbk_400x400-e1759306442143-176x55.jpeg" alt="EURALIS">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 13: IMPLANTATION 1 - France -->
+    <section class="slide" data-chapter="implantation">
+      <div class="slide-inner">
+        <div class="ancrage-layout">
+          <div class="ancrage-text">
+            <h1 class="slide-title" style="text-align: left; margin-bottom: 28px;">Un fort ancrage <strong>en France</strong>...</h1>
+            <p>Nos &eacute;quipes locales accompagnent au quotidien nos clients dans leur d&eacute;veloppement et leurs transformations <strong>en s'appuyant sur un &eacute;cosyst&egrave;me de professionnels en r&eacute;gions</strong> :</p>
+            <p>experts scientifiques, experts comptables, &eacute;tablissements bancaires, p&ocirc;les de comp&eacute;titivit&eacute;, f&eacute;d&eacute;rations professionnelles, avec un maillage de cabinets d'avocats et de m&eacute;decins ind&eacute;pendants.</p>
+          </div>
+          <div class="ancrage-map">
+            <img src="https://ayming-france.github.io/assets/maps/france-map.svg" alt="France" />
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 14: IMPLANTATION 2 - International -->
+    <section class="slide" data-chapter="implantation">
+      <div class="slide-inner">
+        <h1 class="slide-title">
+          ... avec des bureaux dans <strong>14 pays</strong> pour une proximit&eacute; accrue<br>
+          avec nos clients et leur &eacute;cosyst&egrave;me
+        </h1>
+        <div class="implantation-container">
+          <img src="https://ayming-france.github.io/assets/maps/na-map.svg" alt="Am&eacute;rique du Nord" class="implantation-na"/>
+          <img src="https://ayming-france.github.io/assets/maps/eu-map.svg" alt="Europe" class="implantation-eu"/>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 15: QUESTIONS -->
+    <section class="slide" data-chapter="questions">
+      <div class="slide-inner">
+        <h2 class="slide-title">Questions qu'on nous pose</h2>
+        <div class="faq-grid">
+          <div class="faq-card">
+            <h4>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Que se passe-t-il après le rattrapage ?
+            </h4>
+            <p>Le rattrapage remet vos visites à jour. Pour éviter de recréer du retard, Ayming propose l'externalisation complète : convocations, coordination SPST, suivi réglementaire et reporting via Ayming Checkup.</p>
+          </div>
+          <div class="faq-card">
+            <h4>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              Comment quantifiez-vous le retard au départ ?
+            </h4>
+            <p>Le diagnostic récupère les données historiques pour établir la baseline et prioriser le traitement par volume. Nous analysons vos données RH (dates d'embauche, dernières visites, types de postes). Vous avez un rapport clair de l'état du retard avant de commencer.</p>
+          </div>
+          <div class="faq-card">
+            <h4>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              Pouvez-vous gérer plusieurs sites et plusieurs SPST ?
+            </h4>
+            <p>Oui, si défini dans le périmètre. Capacité de gestion des convocations et suivi sur plusieurs localisations. Nous coordonnons simultanément avec plusieurs SPST. Un seul interlocuteur Ayming pour vous. Reporting consolidé multi-sites pour la direction.</p>
+          </div>
+          <div class="faq-card">
+            <h4>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              Comment les données médicales sont-elles protégées ?
+            </h4>
+            <p>Les avis sont archivés selon les normes RGPD et HDS (Hébergement de Données de Santé). Seules les informations nécessaires à la conformité RH sont accessibles. Archivage sécurisé conforme RGPD et HDS. Conformité totale avec les obligations de confidentialité médicale.</p>
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 16: PROCESSUS -->
+    <section class="slide" data-chapter="processus">
+      <div class="slide-inner">
+        <h2 class="slide-title">Prochaines étapes</h2>
+        <div class="process-timeline-4">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <div class="step-title">Diagnostic gratuit de votre situation</div>
+            <div class="step-duration">30 minutes</div>
+            <p class="step-description">Planifions un appel pour comprendre votre contexte (nombre de salariés, sites, SPST, ampleur estimée du retard), identifier vos déclencheurs, évaluer la faisabilité</p>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <div class="step-title">Définition du périmètre</div>
+            <div class="step-duration">+1 semaine</div>
+            <p class="step-description">Définition du périmètre (sites concernés, SPST impliqués, types de visites), calendrier (urgences, délai de rattrapage), modalités (reporting, interlocuteurs, livrables)</p>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <div class="step-title">Lancement phase Diagnostic</div>
+            <div class="step-duration">2-3 semaines</div>
+            <p class="step-description">Récupération des données historiques, analyse de l'état du retard, rapport de diagnostic avec priorisation des urgences, validation avec vous avant phase Planification</p>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="process-step">
+            <div class="step-number">4</div>
+            <div class="step-title">Phase Planification et Exécution</div>
+            <div class="step-duration">3-6 mois</div>
+            <p class="step-description">Coordination avec vos SPST, planification des visites par vagues, convocations aux salariés, suivi en temps réel jusqu'à rattrapage complet</p>
+          </div>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+    <!-- Slide 17: DÉMARRAGE -->
+    <section class="slide" data-chapter="demarrage">
+      <div class="slide-inner">
+        <h2 class="slide-title">Ce dont nous avons besoin</h2>
+        <div class="requirements-box">
+          <h4>Pour démarrer le diagnostic</h4>
+          <ul>
+            <li>
+              <div class="check-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <span>Accès aux données RH (dates d'embauche, dernières visites, types de postes)</span>
+            </li>
+            <li>
+              <div class="check-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <span>Entretien avec équipe RH (1-2 heures)</span>
+            </li>
+            <li>
+              <div class="check-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <span>Contacts de vos SPST actuels</span>
+            </li>
+          </ul>
+        </div>
+        <div class="cta-box">
+          <p class="cta-text">Quand pouvons-nous planifier le diagnostic ?</p>
+        </div>
+      </div>
+      <div class="company-logo"><img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/07/Ayming.png" alt="Ayming"></div>
+    </section>
+
+  </main>
+
+  <!-- Keyboard Hint (clickable) -->
+  <div class="keyboard-hint">
+    <span><span class="key" id="key-prev">←</span><span class="key" id="key-next">→</span> Naviguer</span>
+    <span><span class="key" id="key-fullscreen">F</span> Plein écran</span>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const navItems = document.querySelectorAll('.nav-item');
+    const counter = document.querySelector('.slide-counter');
+    const totalSlides = slides.length;
+
+    const valueDetailStartIndex = 7;
+    const valueDetailCount = 5;
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active');
+        if (index === currentSlide) {
+          slide.classList.add('active');
+        }
+      });
+
+      navItems.forEach((item) => {
+        item.classList.remove('active');
+        const navSlideIndex = parseInt(item.dataset.slide);
+        const isValueDetailSlide = currentSlide >= valueDetailStartIndex &&
+                                   currentSlide < valueDetailStartIndex + valueDetailCount;
+
+        if (navSlideIndex === currentSlide ||
+            (isValueDetailSlide && navSlideIndex === 6)) {
+          item.classList.add('active');
+        }
+      });
+
+      counter.innerHTML = `<span class="current">${currentSlide + 1}</span>/${totalSlides}`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < totalSlides) {
+        currentSlide = index;
+        updateSlide();
+      }
+    }
+
+    // Nav data-slide attributes contain actual slide indices.
+    function getSlideFromNav(navIndex) {
+      return navIndex;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      switch(e.key) {
+        case 'ArrowRight':
+        case ' ':
+          e.preventDefault();
+          nextSlide();
+          break;
+        case 'ArrowLeft':
+          prevSlide();
+          break;
+        case 'f':
+        case 'F':
+          toggleFullscreen();
+          break;
+        case 'Home':
+          goToSlide(0);
+          break;
+        case 'End':
+          goToSlide(totalSlides - 1);
+          break;
+      }
+    });
+
+    navItems.forEach((item) => {
+      item.addEventListener('click', () => {
+        const navIndex = parseInt(item.dataset.slide);
+        const slideIndex = getSlideFromNav(navIndex);
+        goToSlide(slideIndex);
+      });
+    });
+
+    document.getElementById('key-prev').addEventListener('click', prevSlide);
+    document.getElementById('key-next').addEventListener('click', nextSlide);
+    document.getElementById('key-fullscreen').addEventListener('click', toggleFullscreen);
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      const swipeThreshold = 50;
+      const diff = touchStartX - touchEndX;
+
+      if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+          nextSlide();
+        } else {
+          prevSlide();
+        }
+      }
+    }
+
+
+    // Counter animation for Introduction slide
+    function animateIntroCounters() {
+      const introSlide = document.querySelector('.slide-introduction.active');
+      if (!introSlide) return;
+
+      const counters = introSlide.querySelectorAll('.intro-stat-number');
+      counters.forEach(el => {
+        const text = el.textContent.trim();
+        const match = text.match(/^([\d\s]+(?:[,.]\d+)?)\s*(.*)/);
+        if (!match) return;
+
+        const rawNum = match[1].replace(/\s/g, '').replace(',', '.');
+        const target = parseFloat(rawNum);
+        const suffix = match[2] || '';
+        const isDecimal = rawNum.includes('.');
+        const duration = 800;
+        const startTime = performance.now();
+
+        function animateCounter(timestamp) {
+          const elapsed = timestamp - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = target * eased;
+
+          if (isDecimal) {
+            el.textContent = current.toFixed(1).replace('.', ',') + ' ' + suffix;
+          } else {
+            el.textContent = Math.round(current).toLocaleString('fr-FR') + ' ' + suffix;
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(animateCounter);
+          }
+        }
+
+        requestAnimationFrame(animateCounter);
+      });
+    }
+
+    // Trigger counter animation when intro slide becomes active
+    const originalUpdateSlide = updateSlide;
+    updateSlide = function() {
+      originalUpdateSlide();
+      animateIntroCounters();
+    };
+
+    updateSlide();
+  </script>
+
+</body>
+</html>
