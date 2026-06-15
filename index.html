@@ -442,13 +442,24 @@
     <section class="slide" data-chapter="options" style="background: var(--bg-light);">
       <div class="slide-inner">
         <h1 class="slide-title">Option pour aller plus loin</h1>
+        <style>
+          .option-card { text-decoration: none; color: inherit; border-radius: 16px; }
+          .option-card.static .column-card { cursor: default; }
+          .option-card .card-image { position: relative; overflow: hidden; border-radius: 12px; }
+          .option-card .card-image img { transition: transform 0.4s ease; }
+          .option-card:hover .card-image img { transform: scale(1.03); }
+          .option-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; background: linear-gradient(135deg, #003d79, #0ab38c); color: #fff; }
+        </style>
         <div style="display: flex; justify-content: center; width: 100%; max-width: 1100px;">
-          <div class="column-card" style="max-width: 380px;">
-            <div class="card-image">
-              <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-4.jpg" alt="Externalisation complète">
+          <div class="option-card static" style="max-width: 380px;">
+            <div class="column-card">
+              <div class="card-image">
+                <img src="https://www.ayming.fr/wp-content/uploads/sites/3/2025/10/vm-4.jpg" alt="Externalisation complète">
+              </div>
+              <span class="option-badge">En option</span>
+              <h3>Externalisation compl&egrave;te des visites m&eacute;dicales</h3>
+              <p>Pour &eacute;viter de recr&eacute;er du retard apr&egrave;s le projet de rattrapage, Ayming peut prendre en charge l'ensemble de votre processus de gestion des visites m&eacute;dicales par l'externalisation compl&egrave;te. Gestion continue des convocations, coordination SPST, suivi r&eacute;glementaire, et reporting centralis&eacute;.</p>
             </div>
-            <h3>Externalisation compl&egrave;te des visites m&eacute;dicales</h3>
-            <p>Pour &eacute;viter de recr&eacute;er du retard apr&egrave;s le projet de rattrapage, Ayming peut prendre en charge l'ensemble de votre processus de gestion des visites m&eacute;dicales par l'externalisation compl&egrave;te. Gestion continue des convocations, coordination SPST, suivi r&eacute;glementaire, et reporting centralis&eacute;.</p>
           </div>
         </div>
       </div>
